@@ -1,16 +1,24 @@
 print("Loading Modules....")
 import os
+import sys
+import configparser
+import ebooklib
+from ebooklib import epub
 from termcolor import colored
 from bs4 import BeautifulSoup as bs
 import cloudscraper as sc
 #from syn import syn
 import time as ti
 #import aiohttp
+import requests as re
 import asyncio
 from aiocfscrape import CloudflareScraper
 
 print(colored("Modules Loaded...","blue"))
-
+args = sys.argv
+if len(args) == 1 or len(args)>2:
+  print("Please Enter python App.py [configpath].ini")
+  sys.exit()
 
 class scraper():
 	def __init__(self,name):
@@ -20,6 +28,13 @@ class scraper():
 		except:
 			os.system(f"rm -r '{self.name}'")
 			os.mkdir(self.name)
+			
+		self.book = epub.EpubBook()
+		self.book.set_title(self.name)
+		self.book.set_language("en")
+		self.ch_book_list = []
+		self.book_file = self.name+".epub"
+		self.book.spine = ['cover','nav']
 		self.path = self.name+"/"
 		self.csr = sc.create_scraper()
 		self.failed_cha = {}
@@ -84,7 +99,14 @@ class scraper():
 					self.chap_links_t.append(parentsite+'/'+i['href'])
 					print(colored(parentsite+i['href'],'green'))
 		else:
-			r = self.csr.get(url).text
+			stat=0
+			while stat == 0:                
+				try:
+					print("Getting Links...")
+					r = re.get(url).text
+					stat=1
+				except Exception as e:
+					print(e)
 			soup = bs(r, "html.parser")
 			links_tags = soup.select(selector)
 			for i in links_tags:
@@ -134,6 +156,12 @@ class scraper():
 		else:
 			title = f"Chapter {name}"
 		chap = soup.select(ch_selector)
+		
+		book_chap = epub.EpubHtml(title=title, file_name=f'{name}.html', content=str(soup))
+		self.book.add_item(book_chap)
+		self.book.spine.append(book_chap)
+		self.ch_book_list.append(book_chap)
+		
 		with open(f"./{self.name}/{name}.html", "w" ,encoding="UTF-8") as f:
 			f.write(f"<h1>{title}</h1>\n")
 			for x in chap:
@@ -246,131 +274,169 @@ class scraper():
 
 
 if __name__ == "__main__":
-	print("=="*50)
-	os.system("figlet 'Novel Scraper'")
-	print("=="*50)
-	name = input(colored("Enter Novel Name: ", "green"))
-	novel = scraper(name)
-	########################################## CH_NUMBERS ###################################################
-	checker = True
-	while checker:
-		try:
-			n = int(input(colored("Enter the number of chapters: ", "green")))
-			checker = False
-		except ValueError:
-			print(colored("Please Enter a valid number","red"))
-	novel.chp_num = n
-	############################################# CH SELECTOR ################################################
-	ch_s = input(colored("Enter Chapter Container selector: ",'blue'))
-	novel.ch_selector = ch_s
-	############################################ TITLE #################################################
-	checker = True
-	while checker:
-		ti_s = input(colored("Enter Title selector (if no press Enter): ",'blue'))
-		if ti_s == "":
-			novel.title_selector = None
-			print(colored("Please Enter a Title Selector", "red"))
-		else:
-			novel.title_selector = ti_s
-			checker = False
-	########################################### TOC ##################################################	
-	checker4 = True
-	while checker4:
-		toc = input(colored("Choose table of content type\n\t1)TOC1\n\t2)TOC2\n\t3)TOC3\n\t: ","green"))
-		if toc == '1':
-			toc1_url1 = input(colored("Enter a chapter's 2nd URL without the number: ",'green'))
-			toc1_url2 = input(colored("Enter a chapter's 3rd URL without the number: ",'green'))
-			novel.chap_links = novel.con_pages(toc1_url1,toc1_url2,novel.chp_num)
-			novel.chap_links_copy = novel.chap_links
-			print()
-			print(colored("Got TOC!!", "blue"))
-			print("=="*50)
-			input(f"Got {len(novel.chap_links)} Links")
-			checker4 = False
-		################################################
-		elif toc == '2':
-			checker2 = True
-			while checker2:
-				sub_toc2 = input(colored("Choose TOC2 path or URL (p or u): ",'green'))
-				if sub_toc2 in "uU":
-					toc2_url = input(colored("Enter the URL of the Content page: ",'yellow'))
-					toc2_Uselector = input(colored("Enter the Selector of the Content page links: ",'yellow'))
-					toc2_Psite = input(colored("Enter the Home page of the Website (being scraped): ",'yellow'))
-					novel.get_TOC_2(url=toc2_url, selector=toc2_Uselector, parentsite=toc2_Psite)
-					novel.chap_links_copy = novel.chap_links
-					print()
-					print(colored("Got TOC!!", "blue"))
-					print("=="*50)
-					input(f"Got {len(novel.chap_links)} Links")
-					checker2 = False
-					checker4 = False
-				###################
-				elif sub_toc2 in "pP":
-					toc2_path = input(colored("Enter the path of the Content page (HTML File): ",'yellow'))
-					toc2_Pselector = input(colored("Enter the Selector of the Content page links: ",'yellow'))
-					toc2_Psite = input(colored("Enter the Home page of the Website (being scraped): ",'yellow'))
-					novel.get_TOC_2(path=toc2_path, selector=toc2_Pselector, parentsite=toc2_Psite)
-					novel.chap_links_copy = novel.chap_links
-					print()
-					print(colored("Got TOC!!", "blue"))
-					print("=="*50)
-					input(f"Got {len(novel.chap_links)} Links")
-					checker2 = False
-					checker4 = False
-				####################
-				else:
-					print(colored("Please Enter a valid choice p or u", "red"))
-			##############################################
-		elif toc == '3':
-			print(colored("It seems that the TOC page have more than one page\n ","red"))
-			l1 = input(colored("Enter the link of the 2nd page: ",'green'))
-			l2 = input(colored("Enter the link of the 3rd page: ",'green'))
-			checker3 = True
-			while checker3:
-				try:
-					pn = int(input(colored("Enter the number of pages: ",'green')))
-					checker3 = False
-				except ValueError:
-					print(colored("Please Enter a valid number", 'red'))
-			urls = novel.con_pages(l1,l2,pn)
-			toc3_Psite = input(colored("Enter the Home page of the Website (being scraped): ",'green'))
-			toc3_s = input(colored("Enter the Selector of the Content page links: ",'green'))
-			for i in urls:
-				novel.get_TOC_3(i,toc3_s,toc3_Psite)
-			print()
-			novel.chap_links_copy = novel.chap_links
-			print(colored("Got TOC!!", "blue"))
-			input(f"Got {len(novel.chap_links)} Links")
-			print("=="*50)
-			checker4 = False
-			##############################################
-		else:
-			print(colored("Please Enter a vaild choice (1,2 or 3)", "red"))
-			continue
+  config = configparser.ConfigParser()
+  config.read(sys.argv[1])
+  print("=="*50)
+  os.system("figlet 'Novel Scraper'")
+  print("=="*50)
+  while True:        
+    name = config['Novel-Info']['Novel-Name']
+    if name == '':
+      print("Please Enter A proper Name")
+      continue
+    else:
+      break
+  novel = scraper(name)
+  ########################################## CH_NUMBERS ###################################################
+  checker = True
+  while checker:
+    try:
+      n = int(config['Novel-Info']['Chapters-No'])
+      checker = False
+    except ValueError:
+      print(colored("Please Enter a valid number","red"))
+  novel.chp_num = n
+  ############################################# CH SELECTOR ################################################
+  ch_s = config['Novel-Info']['chapter-container-selector']
+  novel.ch_selector = ch_s
+  ############################################ TITLE #################################################
+  checker = True
+  while checker:
+    ti_s = config["Novel-Info"]['title-selector']
+    if ti_s == "":
+      novel.title_selector = None
+      print(colored("Please Enter a Title Selector", "red"))
+    else:
+      novel.title_selector = ti_s
+      checker = False
+  ########################################### TOC ##################################################	
+  checker4 = True
+  while checker4:
+    toc = config["Novel-Info"]['toc-mode']
+    if toc == '1':
+      toc1_url1 = config['TOC1']['chapter 2nd url']
+      toc1_url2 = config['TOC1']['chapter 3rd url']
+      novel.chap_links = novel.con_pages(toc1_url1,toc1_url2,novel.chp_num)
+      novel.chap_links_copy = novel.chap_links
+      print()
+      print(colored("Got TOC!!", "blue"))
+      print("=="*50)
+      print(f"Got {len(novel.chap_links)} Links")
+      checker4 = False
+    ################################################
+    elif toc == '2':
+      checker2 = True
+      while checker2:
+        sub_toc2 = config['TOC2']['mode(p-u)']
+        if sub_toc2 in "uU":
+          toc2_url = config['TOC2']['url of the content page']
+          toc2_Uselector = config['TOC2']['selector of the content page links']
+          toc2_Psite = config["Novel-Info"]['home-page']
+          novel.get_TOC_2(url=toc2_url, selector=toc2_Uselector, parentsite=toc2_Psite)
+          novel.chap_links_copy = novel.chap_links
+          print()
+          print(colored("Got TOC!!", "blue"))
+          print("=="*50)
+          print(f"Got {len(novel.chap_links)} Links")
+          checker2 = False
+          checker4 = False
+        ###################
+        elif sub_toc2 in "pP":
+          toc2_path = config['TOC2']['path of the content page (html file)']
+          toc2_Pselector = config['TOC2']['selector of the content page links']
+          toc2_Psite = config["Novel-Info"]['home-page']
+          novel.get_TOC_2(path=toc2_path, selector=toc2_Pselector, parentsite=toc2_Psite)
+          novel.chap_links_copy = novel.chap_links
+          print()
+          print(colored("Got TOC!!", "blue"))
+          print("=="*50)
+          print(f"Got {len(novel.chap_links)} Links")
+          checker2 = False
+          checker4 = False
+        ####################
+        else:
+          print(colored("Please Enter a valid choice p or u", "red"))
+      ##############################################
+    elif toc == '3':
+      print(colored("It seems that the TOC page have more than one page\n ","red"))
+      l1 = config['TOC3']['link of the 2nd page']
+      l2 = config['TOC3']['link of the 3rd page']
+      checker3 = True
+      while checker3:
+        try:
+          pn = int(config["TOC3"]['number of pages'])
+          checker3 = False
+        except ValueError:
+          print(colored("Please Enter a valid number", 'red'))
+      urls = novel.con_pages(l1,l2,pn)
+      toc3_Psite = config["Novel-Info"]['home-page']
+      toc3_s = config["TOC3"]['selector of the content page links']
+      for i in urls:
+        novel.get_TOC_3(i,toc3_s,toc3_Psite)
+      print()
+      novel.chap_links_copy = novel.chap_links
+      print(colored("Got TOC!!", "blue"))
+      print(f"Got {len(novel.chap_links)} Links")
+      print("=="*50)
+      checker4 = False
+      ##############################################
+    else:
+      print(colored("Please Enter a vaild choice (1,2 or 3)", "red"))
+      continue
 
-		#############################################################################################
-	new_check = True
-	while new_check:
-		mode = input("1) Hard mode\n2) Soft mode\nPlease Chose 1 or 2: ")
-		if mode == '1':
-			print("=="*50)
-			print(colored("Starting...",'red'))
-			novel.get_all_chaps_asyn(novel.chap_links)
-			print()
-			print("=="*50)
-			input(colored("Press any key to quit...","blue"))
-			new_check = False
-		elif mode == '2':
-			print("=="*50)
-			print(colored("Starting...",'red'))
-			novel.get_all_chaps_syn(novel.chap_links)
-			print()
-			print("=="*50)
-			input(colored("Press any key to quit...","blue"))
-			new_check = False
-		else:
-			print(colored("Please Enter a Valid Choice..","red"))
-			continue
+    #############################################################################################
+  new_check = True
+  while new_check:
+    mode = config['scrap-mode']['mode-number(1-2)']
+    if mode == '1':
+      print("=="*50)
+      print(colored("Starting...",'red'))
+      novel.get_all_chaps_asyn(novel.chap_links)
+      print()
+      print("=="*50)
+      #input(colored("Press any key to quit...","blue"))
+      new_check = False
+    elif mode == '2':
+      print("=="*50)
+      print(colored("Starting...",'red'))
+      novel.get_all_chaps_syn(novel.chap_links)
+      print()
+      print("=="*50)
+      
+      new_check = False
+    else:
+      print(colored("Please Enter a Valid Choice..","red"))
+      continue
+
+
+  new_check2 = True
+  print(colored("Generating Ebook...","blue"))
+  while new_check2:
+    mode = config['Cover']['cover-path']
+    if mode != '0':
+      print("=="*50)
+      
+      path = config['Cover']['cover-path']
+      novel.book.set_cover("Image.jpg", open(path, 'rb').read())
+      novel.book.toc = tuple(novel.ch_book_list)
+      novel.book.add_item(epub.EpubNcx())
+      novel.book.add_item(epub.EpubNav())
+      epub.write_epub(novel.book_file, novel.book)
+      new_check2 = False
+    elif mode == '0':
+      print("=="*50)
+      novel.book.spine.remove('cover')
+      novel.book.toc = tuple(novel.ch_book_list)
+      novel.book.add_item(epub.EpubNcx())
+      novel.book.add_item(epub.EpubNav())
+      print(colored("Done!!","red"))
+      print(colored("=="*50,"red"))
+      epub.write_epub(novel.book_file, novel.book)
+      new_check2 = False
+    else:
+      print(colored("Please Enter a Valid Choice..","red"))
+      continue
+
 
 
 
