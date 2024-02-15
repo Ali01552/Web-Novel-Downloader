@@ -429,11 +429,12 @@ if __name__ == "__main__":
         t = tuple(ch_list)
         novel.book.toc = t
         novel.book.spine = ['cover', 'nav']
+        
+        for i in ch_list:
+            novel.book.spine.append(i)                
     
           
-        
-        novel.book.add_item(epub.EpubNcx())
-        novel.book.add_item(epub.EpubNav())
+                
       
         epub.write_epub(novel.book_file, novel.book)
         new_check2 = False
@@ -456,8 +457,8 @@ if __name__ == "__main__":
         t = tuple(ch_list)
         novel.book.toc = t
         novel.book.spine = ['nav']
-        novel.book.add_item(epub.EpubNcx())
-        novel.book.add_item(epub.EpubNav())
+        for i in ch_list:
+            novel.book.spine.append(i)                
         print(colored("Done!!","red"))
         print(colored("=="*50,"red"))
         epub.write_epub(novel.book_file, novel.book)
@@ -465,6 +466,7 @@ if __name__ == "__main__":
     else:
         print(colored("Please Enter a Valid Choice..","red"))
         continue
+
 
 
 
