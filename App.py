@@ -418,7 +418,7 @@ if __name__ == "__main__":
         files.sort(key=lambda n: int(str(n.split(".")[0])))
         ch_list = []
         for file_name in files:
-            with open("./Dangeon of Pride/"+file_name, 'r') as f:
+            with open(f"./{novel.path}"+file_name, 'r') as f:
                 html_file = f.read()
             soup = bs(html_file, "html.parser")
             h1 = soup.find("h1")
@@ -445,7 +445,7 @@ if __name__ == "__main__":
         files.sort(key=lambda n: int(str(n.split(".")[0])))
         ch_list = []
         for file_name in files:
-            with open("./Dangeon of Pride/"+file_name, 'r') as f:
+            with open(f"./{novel.path}"+file_name, 'r') as f:
                 html_file = f.read()
             soup = bs(html_file, "html.parser")
             h1 = soup.find("h1")
