@@ -1,0 +1,7 @@
+
+#chr-content
+#chapter > div > div > h2 > a > span
+
+#list-chapter > div > div > div > div > div > ul > li > a
+
+https://novelhulk.com
