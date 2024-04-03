@@ -1,6 +1,0 @@
-body > div.page-container > div > div > div > div > div.portlet.light.chapter > div.portlet-body > div.chapter-inner.chapter-content
-body > div.page-container > div > div > div > div > div.row.fic-header.margin-bottom-40 > div > div.col-md-5.col-lg-6.col-md-offset-1.text-center.md-text-left > h1
-TOC2
-u
-#chapters > tbody > tr > td:nth-child(1) > a
-https://www.royalroad.com
