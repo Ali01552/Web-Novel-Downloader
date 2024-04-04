@@ -32,8 +32,8 @@ title-selector: (Optional) CSS selector for the element containing the chapter t
 home-page: The website's homepage URL.
 
 [TOC1] (for TOC with predictable chapter links):
-chapter 2nd url: The URL pattern for the second chapter (replace chapter number with {n}).
-chapter 3rd url: The URL pattern for the third chapter (replace chapter number with {n}).
+chapter 2nd url: The URL pattern for the second chapter (remove chapter number from the url).
+chapter 3rd url: The URL pattern for the third chapter (remove chapter number from the url).
 
 [TOC2] (for TOC in a separate webpage):
 mode(p-u): Choose "p" to provide the file path of the TOC webpage (HTML), or "u" to provide the URL of the TOC webpage.
