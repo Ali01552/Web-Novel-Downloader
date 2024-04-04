@@ -12,7 +12,7 @@ This Python application scrapes light novels from various websites and converts 
 ### Installation
 
 1. Make sure you have Python 3 installed.
-2. Clone this repository using `git clone https://github.com/Ali01552/Web-Novel-Downloader.git` (replace YOUR_USERNAME with your GitHub username).
+2. Clone this repository using `git clone https://github.com/Ali01552/Web-Novel-Downloader.git`
 3. Install required libraries by running `pip install -r requirements.txt` in your terminal (navigate to the cloned directory first).
 
 ### Usage
